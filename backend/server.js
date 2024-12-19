@@ -1,22 +1,37 @@
 const express = require('express');
-const dotenv = require('dotenv');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const connectDB = require('./config/db');
-const teamRoutes = require('./routes/teamInfoRoutes'); 
+require('dotenv').config();
 
-dotenv.config();
-connectDB();
+const hackathonRoutes = require('./routes/hackathon');
+const sitankRoutes = require('./routes/sitank');
+const codeSprintRoutes = require('./routes/codeSprint');
 
 const app = express();
-
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-
-// API Routes
-app.use('/api/teams', teamRoutes);
-
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.use(cors());
+app.use(express.json());
+
+
+app.use('/api/hackathon', hackathonRoutes);
+app.use('/api/sitank', sitankRoutes);
+app.use('/api/codeSprint', codeSprintRoutes);
+
+// Database connection
+mongoose.connect("mongodb+srv://parthchoudhari3612:qsefthikp@cluster0.ccucqrl.mongodb.net/", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('Database connection error:', err));
+
+
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
