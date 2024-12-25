@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './css/Nav.css';
 import { Link } from "react-router-dom";
+import axios from 'axios';
 
 const Navbar = () => {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+
+    const handleSubscribe = async (e) => {
+        e.preventDefault();
+
+        // Validate email format
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+            setMessage('Please enter a valid email address');
+            return;
+        }
+
+        try {
+            const response = await axios.post('http://localhost:5000/api/subscribe', { email });
+            setMessage(response.data.message);
+            setEmail('');  // Clear the input field after successful subscription
+        } catch (error) {
+            setMessage(error.response?.data?.message || 'Error subscribing, please try again');
+        }
+    };
+
     return (
         <div>
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -36,10 +58,20 @@ const Navbar = () => {
                                 <Link className="nav-link" to="/Contact">Contact</Link>
                             </li>
                         </ul>
-                        <form className="d-flex ms-3" role="search">
-                        <input type="email" className="input" id="Email" name="Email" placeholder="example@gmail.com" autocomplete="off"/>
-                        <input className="button--submit" value="Subscribe" type="submit"/>
+                        <form className="d-flex ms-3" onSubmit={handleSubscribe} role="search">
+                            <input
+                                type="email"
+                                className="input"
+                                id="Email"
+                                name="Email"
+                                placeholder="example@gmail.com"
+                                autoComplete="off"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            <input className="button--submit" value="Subscribe" type="submit" />
                         </form>
+                        {message && <div className="alert alert-info mt-3">{message}</div>}
                     </div>
                 </div>
             </nav>

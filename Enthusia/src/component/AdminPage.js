@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-  Container, Button, TextField, MenuItem, Select, FormControl, InputLabel, Grid, Card, CardContent, Typography, Box
+  Container, Button, Grid, Card, CardContent, Typography, Box, TextField, Select, MenuItem, InputLabel, FormControl
 } from '@mui/material';
 
 const AdminPage = () => {
@@ -9,10 +9,11 @@ const AdminPage = () => {
   const [hackathonTeams, setHackathonTeams] = useState([]);
   const [sitankTeams, setSitankTeams] = useState([]);
   const [codeSprintTeams, setCodeSprintTeams] = useState([]);
-  const [messages, setMessages] = useState([]); // For storing messages
+  const [messages, setMessages] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterDate, setFilterDate] = useState('');
-  const [sortOption, setSortOption] = useState('');
+  const [sortOption, setSortOption] = useState('alphabetical');
 
   useEffect(() => {
     // Fetch Hackathon teams
@@ -34,10 +35,35 @@ const AdminPage = () => {
     axios.get('http://localhost:5000/api/contact')
       .then(response => setMessages(response.data))
       .catch(error => console.error("Error fetching messages:", error));
+
+    // Fetch subscribers
+    axios.get('http://localhost:5000/api/subscribe')
+      .then(response => setSubscribers(response.data))
+      .catch(error => console.error("Error fetching subscribers:", error));
   }, []);
 
   const handleEventClick = (event) => {
     setSelectedEvent(event);
+  };
+
+  // Filter and sort the data based on the search query and sort option
+  const filterAndSort = (data) => {
+    // Filter by search query (based on email or team name)
+    const filteredData = data.filter(item => 
+      item.email?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      item.teamName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.name?.toLowerCase().includes(searchQuery.toLowerCase()) // for messages
+    );
+
+    // Sort the filtered data
+    return filteredData.sort((a, b) => {
+      if (sortOption === 'alphabetical') {
+        return a.email?.localeCompare(b.email) || a.teamName?.localeCompare(b.teamName) || a.name?.localeCompare(b.name);
+      } else if (sortOption === 'firstRegistered') {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      return 0;
+    });
   };
 
   return (
@@ -49,7 +75,30 @@ const AdminPage = () => {
         <Button variant="contained" onClick={() => handleEventClick('hackathon')}>Hackathon</Button>
         <Button variant="contained" onClick={() => handleEventClick('sitank')}>SITank</Button>
         <Button variant="contained" onClick={() => handleEventClick('codesprint')}>Code Sprint</Button>
-        <Button variant="contained" onClick={() => handleEventClick('messages')}>Messages</Button> {/* New Messages Button */}
+        <Button variant="contained" onClick={() => handleEventClick('messages')}>Messages</Button>
+        <Button variant="contained" onClick={() => handleEventClick('subscribers')}>Subscribers</Button> {/* New Subscribers Button */}
+      </Box>
+
+      {/* Search and Sort Bar */}
+      <Box mb={3} display="flex" justifyContent="space-between">
+        <TextField
+          label="Search"
+          variant="outlined"
+          fullWidth
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <FormControl variant="outlined" style={{ width: 150 }}>
+          <InputLabel>Sort By</InputLabel>
+          <Select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+            label="Sort By"
+          >
+            <MenuItem value="alphabetical">Alphabetical</MenuItem>
+            <MenuItem value="firstRegistered">First Registered</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Render Teams or Messages based on selected event */}
@@ -57,7 +106,7 @@ const AdminPage = () => {
         <Box mt={5}>
           <Typography variant="h5" gutterBottom>Hackathon Teams</Typography>
           <Grid container spacing={3}>
-            {hackathonTeams.map((team) => (
+            {filterAndSort(hackathonTeams).map((team) => (
               <Grid item xs={12} sm={6} md={4} key={team._id}>
                 <Card>
                   <CardContent>
@@ -83,7 +132,7 @@ const AdminPage = () => {
         <Box mt={5}>
           <Typography variant="h5" gutterBottom>SITank Teams</Typography>
           <Grid container spacing={3}>
-            {sitankTeams.map((team) => (
+            {filterAndSort(sitankTeams).map((team) => (
               <Grid item xs={12} sm={6} md={4} key={team._id}>
                 <Card>
                   <CardContent>
@@ -109,7 +158,7 @@ const AdminPage = () => {
         <Box mt={5}>
           <Typography variant="h5" gutterBottom>Code Sprint Teams</Typography>
           <Grid container spacing={3}>
-            {codeSprintTeams.map((team) => (
+            {filterAndSort(codeSprintTeams).map((team) => (
               <Grid item xs={12} sm={6} md={4} key={team._id}>
                 <Card>
                   <CardContent>
@@ -135,7 +184,7 @@ const AdminPage = () => {
         <Box mt={5}>
           <Typography variant="h5" gutterBottom>Messages from Users</Typography>
           <Grid container spacing={3}>
-            {messages.map((message) => (
+            {filterAndSort(messages).map((message) => (
               <Grid item xs={12} sm={6} md={4} key={message._id}>
                 <Card>
                   <CardContent>
@@ -150,6 +199,27 @@ const AdminPage = () => {
           </Grid>
         </Box>
       )}
+
+      {selectedEvent === 'subscribers' && (
+        <Box mt={5}>
+          <Typography variant="h5" gutterBottom>Subscribers</Typography>
+          <Grid container spacing={3}>
+            {filterAndSort(subscribers).map((subscriber) => (
+              <Grid item xs={12} sm={6} md={4} key={subscriber._id}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6">{subscriber.email}</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      Registered on: {new Date(subscriber.createdAt).toLocaleString()}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
     </Container>
   );
 };

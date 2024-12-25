@@ -7,6 +7,7 @@ const hackathonRoutes = require('./routes/hackathon');
 const sitankRoutes = require('./routes/sitank');
 const codeSprintRoutes = require('./routes/codeSprint');
 const contactRoutes = require("./routes/contact");
+const subscribeRoutes = require("./routes/subscriber");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -19,6 +20,7 @@ app.use('/api/hackathon', hackathonRoutes);
 app.use('/api/sitank', sitankRoutes);
 app.use('/api/codeSprint', codeSprintRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/subscribe', subscribeRoutes);
 // Database connection
 mongoose.connect("mongodb+srv://parthchoudhari3612:qsefthikp@cluster0.ccucqrl.mongodb.net/", {
   useNewUrlParser: true,
